@@ -1,0 +1,9 @@
+{
+  "yaml.schemas": {
+    "C:\\Users\\ledun\\Desktop\\blog_code\\using-ipc\\schemas\\schema.json": [
+      ".github/**/*.yml",
+      ".github/**/*.yaml"
+    ],
+    "https://json.schemastore.org/loki.json": "file:///c%3A/Users/ledun/Desktop/nodejs/distributed_tracing/loki-config.yaml"
+  }
+}

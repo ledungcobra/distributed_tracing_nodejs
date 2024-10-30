@@ -1,0 +1,79 @@
+version: "3.7"
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+    depends_on:
+      - jaeger
+  
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831/udp" # UDP port for Jaeger agent
+      - "16686:16686" # Web UI
+      - "14268:14268" # HTTP port for spans
+
+  loki:
+    image: bitnami/grafana-loki:3.2.0
+    ports:
+      - "3100:3100" # HTTP port for Loki
+    volumes:
+      - ./loki-config.yaml:/bitnami/grafana-loki/conf/loki.yaml
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "5000:3000"
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+        - name: Loki
+          type: loki
+          access: proxy 
+          orgId: 1
+          url: http://loki:3100
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
+        EOF
+        /run.sh
+
+  rabbitmq:
+    image: rabbitmq:3-management  # Use the RabbitMQ image with the management plugin
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"  # Default RabbitMQ port
+      - "15672:15672"  # Management console port
+    environment:
+      RABBITMQ_DEFAULT_USER: user  # Default username
+      RABBITMQ_DEFAULT_PASS: password  # Default password
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq  # Persist data
+
+volumes:
+  rabbitmq_data:
+  loki_data:
+  grafana_data:
