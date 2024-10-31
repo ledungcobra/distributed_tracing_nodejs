@@ -9,7 +9,7 @@ services:
       - "4317:4317" # OTLP gRPC receiver
     depends_on:
       - jaeger
-  
+
   jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
@@ -23,6 +23,11 @@ services:
       - "3100:3100" # HTTP port for Loki
     volumes:
       - ./loki-config.yaml:/bitnami/grafana-loki/conf/loki.yaml
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   prometheus:
     image: prom/prometheus:latest
@@ -30,7 +35,8 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
-
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
   grafana:
     image: grafana/grafana:latest
     volumes:
@@ -58,20 +64,45 @@ services:
           isDefault: true
           version: 1
           editable: false
+        - name: Prometheus
+          type: prometheus
+          access: proxy
+          isDefault: false
+          version: 1
+          editable: false
+          url: http://prometheus:9090
         EOF
         /run.sh
 
   rabbitmq:
-    image: rabbitmq:3-management  # Use the RabbitMQ image with the management plugin
+    image: rabbitmq:3-management # Use the RabbitMQ image with the management plugin
     container_name: rabbitmq
     ports:
-      - "5672:5672"  # Default RabbitMQ port
-      - "15672:15672"  # Management console port
+      - "5672:5672" # Default RabbitMQ port
+      - "15672:15672" # Management console port
     environment:
-      RABBITMQ_DEFAULT_USER: user  # Default username
-      RABBITMQ_DEFAULT_PASS: password  # Default password
+      RABBITMQ_DEFAULT_USER: user # Default username
+      RABBITMQ_DEFAULT_PASS: password # Default password
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq  # Persist data
+      - rabbitmq_data:/var/lib/rabbitmq # Persist data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      RABBITMQ_ENDPOINT: amqp://user:password@rabbitmq
+      SERVICE_NAME: tracing-service
+    depends_on:
+      - rabbitmq
+      - otel-collector
+      - loki
+      - prometheus
+      - grafana
+    ports:
+      - "4000:4000"
+      - "9464:9464"
 
 volumes:
   rabbitmq_data:

@@ -5,9 +5,11 @@ const express = require("express");
 const { context, trace, propagation } = require("@opentelemetry/api");
 const logger = require("./logger");
 const app = express();
+const apiMetrics = require('prometheus-api-metrics');
+app.use(apiMetrics());
 
 async function sendMessage(message) {
-  const connection = await amqp.connect("amqp://user:password@localhost");
+  const connection = await amqp.connect(process.env.RABBITMQ_ENDPOINT || "amqp://user:password@localhost");
   const channel = await connection.createChannel();
   const queue = "tracing-demo";
 
@@ -28,7 +30,7 @@ async function sendMessage(message) {
 }
 
 async function receiveMessage() {
-  const connection = await amqp.connect("amqp://user:password@localhost");
+  const connection = await amqp.connect(process.env.RABBITMQ_ENDPOINT || "amqp://user:password@localhost");
   const channel = await connection.createChannel();
   const queue = "tracing-demo";
 
