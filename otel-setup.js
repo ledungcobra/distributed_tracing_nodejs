@@ -7,24 +7,29 @@ const {
   OTLPTraceExporter,
 } = require("@opentelemetry/exporter-trace-otlp-grpc");
 const { SimpleSpanProcessor } = require("@opentelemetry/sdk-trace-base");
-const { PeriodicExportingMetricReader } = require("@opentelemetry/sdk-metrics"); 
-// Set the global logger to log at debug level
-// diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
-const jaegerExporter = new OTLPTraceExporter({
-  url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || "http://otel-collector:4317",
+const { diag, DiagConsoleLogger, DiagLogLevel } = require("@opentelemetry/api");
+const { logRecordProcessor } = require("./log_provider");
+const { Resource } = require("@opentelemetry/resources");
+// Set the global logger to log at debug level
+diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
+
+const oltpTraceExporter = new OTLPTraceExporter({
+  url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || "http://localhost:4317",
 });
 
-// const prometheusExporter = new PrometheusExporter({
-// });
-
-const spanProcessor = new SimpleSpanProcessor(jaegerExporter);
+const spanProcessor = new SimpleSpanProcessor(oltpTraceExporter);
 
 const sdk = new NodeSDK({
-  serviceName: process.env.SERVICE_NAME || "tracing-demo",
-  traceExporter: jaegerExporter,
+  serviceName: process.env.SERVICE_NAME || "tracing-service",
+  traceExporter: oltpTraceExporter,
+  logRecordProcessors: [logRecordProcessor],
   spanProcessors: [spanProcessor],
-  // metricReader: prometheusExporter,
+
+  resource: new Resource({
+    "service.name": process.env.SERVICE_NAME || "tracing-service",
+  }),
+
   instrumentations: [
     getNodeAutoInstrumentations({
       "@opentelemetry/instrumentation-http": {
@@ -39,7 +44,7 @@ const sdk = new NodeSDK({
 
 sdk.start();
 
-process.on("SIGTERM", () => {
+function shutdown() {
   sdk
     .shutdown()
     .then(
@@ -47,4 +52,6 @@ process.on("SIGTERM", () => {
       (err) => console.log("Error shutting down SDK", err)
     )
     .finally(() => process.exit(0));
-});
+}
+
+process.on("SIGTERM", shutdown);

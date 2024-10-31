@@ -17,3 +17,12 @@ autocannon -c 10000 http://localhost:4000/send/test
 
 
 https://grafana.com/grafana/dashboards/12230-node-js-dashboard/
+
+
+
+
+
+http://localhost:5000/plugins/grafana-exploretraces-app
+
+
+https://github.com/jaegertracing/jaeger/blob/main/monitoring/jaeger-mixin/dashboard-for-grafana.json

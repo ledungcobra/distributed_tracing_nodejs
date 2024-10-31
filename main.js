@@ -1,3 +1,4 @@
+require("dotenv").config();
 require("./otel-setup"); // Must be imported first
 
 const amqp = require("amqplib");
@@ -5,11 +6,13 @@ const express = require("express");
 const { context, trace, propagation } = require("@opentelemetry/api");
 const logger = require("./logger");
 const app = express();
-const apiMetrics = require('prometheus-api-metrics');
+const apiMetrics = require("prometheus-api-metrics");
 app.use(apiMetrics());
 
 async function sendMessage(message) {
-  const connection = await amqp.connect(process.env.RABBITMQ_ENDPOINT || "amqp://user:password@localhost");
+  const connection = await amqp.connect(
+    process.env.RABBITMQ_ENDPOINT || "amqp://user:password@localhost"
+  );
   const channel = await connection.createChannel();
   const queue = "tracing-demo";
 
@@ -18,19 +21,20 @@ async function sendMessage(message) {
   // Get the current span and inject the context into the message headers
   const currentSpan = trace.getSpan(context.active());
   const headers = {};
-  if (currentSpan) {
-    propagation.inject(context.active(), headers);
-  }
+  propagation.inject(context.active(), headers);
 
   channel.sendToQueue(queue, Buffer.from(message), { headers });
   logger.info(`Message sent: ${message}`);
-
+  currentSpan.end();
+  
   await channel.close();
   await connection.close();
 }
 
 async function receiveMessage() {
-  const connection = await amqp.connect(process.env.RABBITMQ_ENDPOINT || "amqp://user:password@localhost");
+  const connection = await amqp.connect(
+    process.env.RABBITMQ_ENDPOINT || "amqp://user:password@localhost"
+  );
   const channel = await connection.createChannel();
   const queue = "tracing-demo";
 

@@ -14,7 +14,7 @@ services:
     image: jaegertracing/all-in-one:latest
     ports:
       - "6831:6831/udp" # UDP port for Jaeger agent
-      - "16686:16686" # Web UI
+      - "16686:16686" # Web UI & Datasource for Gafana
       - "14268:14268" # HTTP port for spans
 
   loki:
@@ -38,7 +38,7 @@ services:
     command:
       - --config.file=/etc/prometheus/prometheus.yml
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.3.0
     volumes:
       - grafana_data:/var/lib/grafana
     ports:
@@ -71,9 +71,17 @@ services:
           version: 1
           editable: false
           url: http://prometheus:9090
+
+        
         EOF
         /run.sh
-
+                # - name: Jaeger
+        #   type: jaeger
+        #   access: proxy
+        #   isDefault: false
+        #   version: 1
+        #   editable: false
+        #   url: http://jaeger:16686
   rabbitmq:
     image: rabbitmq:3-management # Use the RabbitMQ image with the management plugin
     container_name: rabbitmq
@@ -85,7 +93,6 @@ services:
       RABBITMQ_DEFAULT_PASS: password # Default password
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq # Persist data
-
   app:
     build:
       context: .
@@ -108,3 +115,4 @@ volumes:
   rabbitmq_data:
   loki_data:
   grafana_data:
+  tempo_data:

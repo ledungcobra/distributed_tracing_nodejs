@@ -2,42 +2,21 @@ const { OTLPLogExporter } = require("@opentelemetry/exporter-logs-otlp-grpc");
 const {
   BatchLogRecordProcessor,
   LoggerProvider,
-  ConsoleLogRecordExporter,
-  SimpleLogRecordProcessor,
 } = require("@opentelemetry/sdk-logs");
-
-const { diag, DiagConsoleLogger, DiagLogLevel } = require("@opentelemetry/api");
+const {loggerProvider} = require("./log_provider");
+// Set the global logger to log at debug level
+// diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
 class Logger {
   constructor() {
-    const loggerExporter = new OTLPLogExporter({
-      url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || "http://localhost:4317",
-    });
-
-    // Set the global logger to log at debug level
-    // diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
-    const resource = {
-      attributes: {
-        "service.name": process.env.SERVICE_NAME || "tracing-demo",
-      },
-    };
-
-    const loggerProvider = new LoggerProvider({ resource });
-
-    loggerProvider.addLogRecordProcessor(
-      new BatchLogRecordProcessor(loggerExporter)
-    );
-
-    loggerProvider.addLogRecordProcessor(
-      new SimpleLogRecordProcessor(new ConsoleLogRecordExporter())
-    );
-
     this.logger = loggerProvider.getLogger("example-logger");
   }
 
   info(message) {
-    this.logger.emit({ body: message, severity: "INFO" });
-    console.log(message);
+    this.logger.emit({
+      body: message,
+      severity: "INFO",
+    });
   }
 
   error(message) {
