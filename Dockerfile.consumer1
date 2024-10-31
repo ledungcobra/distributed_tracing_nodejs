@@ -1,0 +1,7 @@
+FROM node:12.22.12-alpine
+
+WORKDIR /app
+
+RUN npm install -g nodemon
+
+CMD ["nodemon", "--legacy-watch", "consumer.js"]

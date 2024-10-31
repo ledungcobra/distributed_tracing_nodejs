@@ -80,17 +80,8 @@ services:
           version: 1
           editable: false
           url: http://prometheus:9090
-
-
         EOF
         /run.sh
-                # - name: Jaeger
-        #   type: jaeger
-        #   access: proxy
-        #   isDefault: false
-        #   version: 1
-        #   editable: false
-        #   url: http://jaeger:16686
   rabbitmq:
     image: rabbitmq:3-management # Use the RabbitMQ image with the management plugin
     container_name: rabbitmq
@@ -105,7 +96,9 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.producer
+    volumes:
+      - ./:/app
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       RABBITMQ_ENDPOINT: amqp://user:password@rabbitmq
@@ -120,8 +113,34 @@ services:
       - "4000:4000"
       - "9464:9464"
 
+  postgres:
+    image: postgres:16.1
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql-data:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.consumer1
+    depends_on:
+      - rabbitmq
+      - otel-collector
+    volumes:
+      - ./:/app
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      RABBITMQ_ENDPOINT: amqp://user:password@rabbitmq
+      SERVICE_NAME: tracing-consumer
+
 volumes:
   rabbitmq_data:
   loki_data:
   grafana_data:
   new_tempo_data:
+  postgres_data:

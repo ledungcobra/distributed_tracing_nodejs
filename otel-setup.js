@@ -12,7 +12,7 @@ const { diag, DiagConsoleLogger, DiagLogLevel } = require("@opentelemetry/api");
 const { logRecordProcessor } = require("./log_provider");
 const { Resource } = require("@opentelemetry/resources");
 // Set the global logger to log at debug level
-diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
+// diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
 const oltpTraceExporter = new OTLPTraceExporter({
   url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || "http://localhost:4317",
