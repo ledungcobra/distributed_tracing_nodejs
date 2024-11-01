@@ -113,16 +113,16 @@ services:
       - "4000:4000"
       - "9464:9464"
 
-  postgres:
-    image: postgres:16.1
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./sql-data:/docker-entrypoint-initdb.d
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+  # postgres:
+  #   image: postgres:16.1
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #     - ./sql-data:/docker-entrypoint-initdb.d
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
 
   consumer:
     build:

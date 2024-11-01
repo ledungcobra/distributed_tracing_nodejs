@@ -18,7 +18,6 @@ class Logger {
     this.logger.emit({
       body: message,
       severity: "INFO",
-      context: context.active(),
     });
   }
 
@@ -26,7 +25,6 @@ class Logger {
     this.logger.emit({
       body: message,
       severity: "ERROR",
-      context: context.active(),
     });
   }
 
@@ -34,7 +32,6 @@ class Logger {
     this.logger.emit({
       body: message,
       severity: "WARN",
-      context: context.active(),
     });
   }
 
@@ -42,7 +39,6 @@ class Logger {
     this.logger.emit({
       body: message,
       severity: "DEBUG",
-      context: context.active(),
     });
   }
 }
