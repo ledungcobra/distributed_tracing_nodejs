@@ -2,7 +2,6 @@ const { NodeSDK } = require("@opentelemetry/sdk-node");
 const {
   getNodeAutoInstrumentations,
 } = require("@opentelemetry/auto-instrumentations-node");
-const { PrometheusExporter } = require("@opentelemetry/exporter-prometheus");
 const {
   OTLPTraceExporter,
 } = require("@opentelemetry/exporter-trace-otlp-grpc");
@@ -16,9 +15,12 @@ const {
   DiagConsoleLogger,
   DiagLogLevel,
   trace,
+  propagation,
 } = require("@opentelemetry/api");
 const { logRecordProcessor } = require("./log_provider");
 const { Resource } = require("@opentelemetry/resources");
+const { ATTR_SERVICE_NAME } = require("@opentelemetry/semantic-conventions");
+
 // Set the global logger to log at debug level
 // diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
@@ -42,39 +44,62 @@ const spanProcessor =
     ? new BatchSpanProcessor(oltpTraceExporter, batchSpanProcessorOptions)
     : new SimpleSpanProcessor(oltpTraceExporter);
 
+// Optionaly configure instrumentation
+const instrumentationConfigs = {
+  "@opentelemetry/instrumentation-http": {
+    enabled: true,
+    ignoreIncomingRequestHook: (req) => {
+      // Ignore metrics and health check endpoints
+      const extractPaths = ["/metrics", "/health", "/"];
+      const wildcardPaths = ["/test/*"];
+      return (
+        extractPaths.includes(req.url) ||
+        wildcardPaths.some((path) => req.url.startsWith(path))
+      );
+    },
+  },
+  "@opentelemetry/instrumentation-amqplib": {
+    enabled: true,
+  },
+};
+
+const { B3Propagator } = require("@opentelemetry/propagator-b3");
+const { AWSXRayPropagator } = require("@opentelemetry/propagator-aws-xray");
+const { CompositePropagator } = require("@opentelemetry/core");
+const { W3CTraceContextPropagator } = require("@opentelemetry/core");
+
+const propagator = new CompositePropagator({
+  propagators: [
+    new W3CTraceContextPropagator(),
+    new B3Propagator(),
+    new AWSXRayPropagator(),
+  ],
+});
+
 const sdk = new NodeSDK({
   serviceName: process.env.SERVICE_NAME || "tracing-service",
   traceExporter: oltpTraceExporter,
   logRecordProcessors: [logRecordProcessor],
   spanProcessors: [spanProcessor],
   resource: new Resource({
-    "service.name": process.env.SERVICE_NAME || "tracing-service",
+    [ATTR_SERVICE_NAME]: process.env.SERVICE_NAME || "tracing-service",
   }),
-
-  instrumentations: [
-    getNodeAutoInstrumentations({
-      "@opentelemetry/instrumentation-http": {
-        enabled: true,
-        ignoreIncomingRequestHook: (req) => {
-          // Ignore metrics and health check endpoints
-          const extractPaths = ["/metrics", "/health", "/"];
-          const wildcardPaths = ["/test/*"];
-          return (
-            extractPaths.includes(req.url) ||
-            wildcardPaths.some((path) => req.url.startsWith(path))
-          );
-        },
+  instrumentations: [getNodeAutoInstrumentations(instrumentationConfigs)],
+  resourceDetectors: [
+    {
+      detect: () => {
+        return new Resource({
+          "container.name": "test",
+        });
       },
-      "@opentelemetry/instrumentation-amqplib": {
-        enabled: true,
-      },
-    }),
+    },
   ],
+  textMapPropagator: propagator,
 });
 
 sdk.start();
 
-function shutdown() {
+const shutdown = () =>
   sdk
     .shutdown()
     .then(
@@ -82,7 +107,6 @@ function shutdown() {
       (err) => console.log("Error shutting down SDK", err)
     )
     .finally(() => process.exit(0));
-}
 
 ["SIGTERM", "SIGINT"].forEach((signal) => {
   process.on(signal, shutdown);

@@ -35,4 +35,13 @@ async function receiveMessage() {
   });
 }
 
+app.get("/say-hello", (req, res) => {
+  logger.info("Saying hello");
+  res.send("Hello");
+});
+
+app.listen(process.env.CONSUMER_PORT, () => {
+  console.log(`Consumer is running on port ${process.env.CONSUMER_PORT}`);
+});
+
 receiveMessage();

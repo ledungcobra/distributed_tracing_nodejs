@@ -16,7 +16,12 @@ const loggerExporter = new OTLPLogExporter({
 });
 
 const loggerProvider = new LoggerProvider({resource});
-const logRecordProcessor = new BatchLogRecordProcessor(loggerExporter);
+const logRecordProcessor = new BatchLogRecordProcessor(loggerExporter, {
+  scheduledDelayMillis: 1000, // Calling the exporter every second
+  maxQueueSize: 1000, // Queue size of 1000 logs,
+  maxExportBatchSize: 500, // Export 500 logs at a time
+  exportTimeoutMillis: 30000, // wait 30 seconds for logs to be exported otherwise cons
+});
 
 loggerProvider.addLogRecordProcessor(logRecordProcessor);
 
