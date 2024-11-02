@@ -11,7 +11,12 @@ const {
   BatchSpanProcessor,
 } = require("@opentelemetry/sdk-trace-base");
 
-const { diag, DiagConsoleLogger, DiagLogLevel, trace } = require("@opentelemetry/api");
+const {
+  diag,
+  DiagConsoleLogger,
+  DiagLogLevel,
+  trace,
+} = require("@opentelemetry/api");
 const { logRecordProcessor } = require("./log_provider");
 const { Resource } = require("@opentelemetry/resources");
 // Set the global logger to log at debug level
@@ -32,8 +37,6 @@ const batchSpanProcessorOptions = {
   maxExportBatchSize: 1000, // max number of spans to send in a single batch
 };
 
-
-
 const spanProcessor =
   process.env.NODE_ENV === "production"
     ? new BatchSpanProcessor(oltpTraceExporter, batchSpanProcessorOptions)
@@ -52,6 +55,15 @@ const sdk = new NodeSDK({
     getNodeAutoInstrumentations({
       "@opentelemetry/instrumentation-http": {
         enabled: true,
+        ignoreIncomingRequestHook: (req) => {
+          // Ignore metrics and health check endpoints
+          const extractPaths = ["/metrics", "/health", "/"];
+          const wildcardPaths = ["/test/*"];
+          return (
+            extractPaths.includes(req.url) ||
+            wildcardPaths.some((path) => req.url.startsWith(path))
+          );
+        },
       },
       "@opentelemetry/instrumentation-amqplib": {
         enabled: true,
@@ -59,7 +71,6 @@ const sdk = new NodeSDK({
     }),
   ],
 });
-
 
 sdk.start();
 

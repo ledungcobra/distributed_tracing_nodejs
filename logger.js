@@ -4,7 +4,7 @@ const {
   LoggerProvider,
 } = require("@opentelemetry/sdk-logs");
 const { loggerProvider } = require("./log_provider");
-const { context } = require("@opentelemetry/api");
+const { context, trace } = require("@opentelemetry/api");
 
 // Set the global logger to log at debug level
 // diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
@@ -18,6 +18,7 @@ class Logger {
     this.logger.emit({
       body: message,
       severity: "INFO",
+      // context: context.active(),
     });
   }
 

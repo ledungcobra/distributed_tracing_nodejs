@@ -22,28 +22,11 @@ async function receiveMessage() {
   await channel.assertQueue(queue, { durable: false });
 
   channel.consume(queue, (msg) => {
-    if (msg) {
-      console.log("Headers: " + JSON.stringify(msg.properties.headers));
-
-      const ctx = propagation.extract(
-        context.active(),
-        msg.properties.headers,
-        {
-          get: (carrier, key) => carrier[key],
-          keys: (carrier) => Object.keys(carrier),
-        }
-      );
-      
-      const currentSpan = trace.getSpan(ctx);
-      context.with(trace.setSpan(ctx, currentSpan), () => {
-        console.log(`Trace id: ${currentSpan.spanContext().traceId}`);
-        console.log(`Span id: ${currentSpan.spanContext().spanId}`);
-        // Add span context to the log
-        logger.info(`Received: ${msg.content.toString()}`);
-        channel.ack(msg);
-        currentSpan.end();
-      });
-    }
+    if (!msg) return;
+    logger.info(`Received: ${msg.content.toString()}`);
+    const span = trace.getActiveSpan();
+    span.end();
+    channel.ack(msg);
   });
 
   process.on("SIGINT", () => {

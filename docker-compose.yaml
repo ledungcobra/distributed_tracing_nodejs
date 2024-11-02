@@ -131,6 +131,9 @@ services:
     depends_on:
       - rabbitmq
       - otel-collector
+      - loki
+      - prometheus
+      - grafana
     volumes:
       - ./:/app
     environment:
