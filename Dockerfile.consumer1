@@ -4,4 +4,4 @@ WORKDIR /app
 
 RUN npm install -g nodemon
 
-CMD ["nodemon", "--legacy-watch", "consumer.js"]
+CMD ["nodemon", "--legacy-watch", "--watch", "consumer.js", "--watch", "otel-setup.js", "consumer.js"]

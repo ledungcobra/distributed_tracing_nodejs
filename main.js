@@ -18,10 +18,6 @@ async function sendMessage(message) {
 
   await channel.assertQueue(queue, { durable: false });
 
-  // if (!currentSpan) {
-  //   console.log("No active span");
-  // }
-
   const headers = {};
   propagation.inject(context.active(), headers);
 
