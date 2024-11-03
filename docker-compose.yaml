@@ -104,6 +104,7 @@ services:
       RABBITMQ_ENDPOINT: amqp://user:password@rabbitmq
       SERVICE_NAME: tracing-producer
       PUBLISHER_PORT: 4000
+      NODE_ENV: production
     depends_on:
       - rabbitmq
       - otel-collector
@@ -142,6 +143,7 @@ services:
       RABBITMQ_ENDPOINT: amqp://user:password@rabbitmq
       SERVICE_NAME: tracing-consumer
       CONSUMER_PORT: 4001
+      NODE_ENV: production
 
 volumes:
   rabbitmq_data:

@@ -1,0 +1,189 @@
+{
+	"info": {
+		"_postman_id": "d66c01b9-0e95-4a26-9349-a5e717117c9e",
+		"name": "Otel",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24064867"
+	},
+	"item": [
+		{
+			"name": "RabbitMQ",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4000/send/aaaaaa",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"send",
+						"aaaaaa"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Manual Instrument",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4000/test/tracer2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"test",
+						"tracer2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Manual Instrument Copy",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4000/test/tracer",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"test",
+						"tracer"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Call other rest API",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4000/call-say-hello",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"call-say-hello"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test Events",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4000/test/events",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"test",
+						"events"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test Error",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4000/test/error",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"test",
+						"error"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test Error2",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4000/test/error2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"test",
+						"error2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Status Ok",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4000/test/status_ok",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"test",
+						"status_ok"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Status Error",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4000/test/status_error",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"test",
+						"status_error"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

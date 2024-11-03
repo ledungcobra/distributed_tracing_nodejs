@@ -22,4 +22,3 @@ scrape_configs:
         labels:
           instance: 'app-nodejs'
           Application: 'app-nodejs'
-    

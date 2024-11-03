@@ -22,7 +22,7 @@ const { Resource } = require("@opentelemetry/resources");
 const { ATTR_SERVICE_NAME } = require("@opentelemetry/semantic-conventions");
 
 // Set the global logger to log at debug level
-// diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
+diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
 
 const oltpTraceExporter = new OTLPTraceExporter({
   url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || "http://localhost:4317",
@@ -34,9 +34,9 @@ const oltpTraceExporter = new OTLPTraceExporter({
  */
 const batchSpanProcessorOptions = {
   exportTimeoutMillis: 60000, // allow 60 seconds for the exporter to send the data consider failure
-  scheduledDelayMillis: 1000, // delay between batches
-  maxQueueSize: 10000, // max number of spans to hold in the queue
-  maxExportBatchSize: 1000, // max number of spans to send in a single batch
+  scheduledDelayMillis: 500, // delay between batches
+  maxQueueSize: 20000, // max number of spans to hold in the queue
+  maxExportBatchSize: 5000, // max number of spans to send in a single batch
 };
 
 const spanProcessor =
