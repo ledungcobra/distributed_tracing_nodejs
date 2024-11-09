@@ -45,24 +45,6 @@ const spanProcessor =
     : new SimpleSpanProcessor(oltpTraceExporter);
 
 // Optionaly configure instrumentation
-const instrumentationConfigs = {
-  "@opentelemetry/instrumentation-http": {
-    enabled: true,
-    ignoreIncomingRequestHook: (req) => {
-      // Ignore metrics and health check endpoints
-      const extractPaths = ["/metrics", "/health", "/"];
-      const wildcardPaths = ["/test/*"];
-      return (
-        extractPaths.includes(req.url) ||
-        wildcardPaths.some((path) => req.url.startsWith(path))
-      );
-    },
-  },
-  "@opentelemetry/instrumentation-amqplib": {
-    enabled: true,
-  },
-};
-
 const { B3Propagator } = require("@opentelemetry/propagator-b3");
 const { AWSXRayPropagator } = require("@opentelemetry/propagator-aws-xray");
 const { CompositePropagator } = require("@opentelemetry/core");
@@ -84,7 +66,26 @@ const sdk = new NodeSDK({
   resource: new Resource({
     [ATTR_SERVICE_NAME]: process.env.SERVICE_NAME || "tracing-service",
   }),
-  instrumentations: [getNodeAutoInstrumentations(instrumentationConfigs)],
+  instrumentations: [getNodeAutoInstrumentations({
+    "@opentelemetry/instrumentation-http": {
+      enabled: true,
+      ignoreIncomingRequestHook: (req) => {
+        // Ignore metrics and health check endpoints
+        const extractPaths = ["/metrics", "/health", "/"];
+        const wildcardPaths = ["/test/*"];
+        return (
+          extractPaths.includes(req.url) ||
+          wildcardPaths.some((path) => req.url.startsWith(path))
+        );
+      },
+    },
+    "@opentelemetry/instrumentation-amqplib": {
+      enabled: true,
+    },
+    '@opentelemetry/instrumentation-pg': {
+      
+    }
+  })],
   resourceDetectors: [
     {
       detect: () => {

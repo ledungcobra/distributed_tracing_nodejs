@@ -1,0 +1,22 @@
+groups:
+  - name: memory-alert
+    interval: 15s
+    rules:
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes{job="app"} > 30000000 # 30MB
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High memory usage detected on {{ .Labels.instance }}"
+          description: "Memory usage is above 30MB for more than 5 minutes."
+  - name: node-down
+    rules: 
+      - alert: NodeDown
+        expr: up{job="app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node is down"
+          description: "{{ .Labels.instance }} is down for more than 1 minute."

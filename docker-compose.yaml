@@ -1,9 +1,10 @@
 version: "3.7"
 services:
   tempo:
+    container_name: tempo
     image: grafana/tempo:latest
     volumes:
-      - ./tempo.yaml:/etc/tempo.yml
+      - ./yml-config/tempo.yaml:/etc/tempo.yml
       - new_tempo_data:/var/tempo
     ports:
       - "3200:3200" # tempo gafana
@@ -14,39 +15,34 @@ services:
     image: otel/opentelemetry-collector-contrib:latest
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
-      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ./yml-config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
       - "4317:4317" # OTLP gRPC receiver
     depends_on:
       - tempo
-
-  # jaeger:
-  #   image: jaegertracing/all-in-one:latest
-  #   ports:
-  #     - "6831:6831/udp" # UDP port for Jaeger agent
-  #     - "16686:16686" # Web UI & Datasource for Gafana
-  #     - "14268:14268" # HTTP port for spans
   loki:
+    container_name: loki
     image: bitnami/grafana-loki:3.2.0
     ports:
       - "3100:3100" # HTTP port for Loki
+    environment:
+      - LOKI_PROMETHEUS_ENABLED=true
+      - LOKI_PROMETHEUS_PORT=3100
     volumes:
-      - ./loki-config.yaml:/bitnami/grafana-loki/conf/loki.yaml
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3100/metrics"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      - ./yml-config/loki-config.yaml:/bitnami/grafana-loki/conf/loki.yaml
 
   prometheus:
+    container_name: prometheus
     image: prom/prometheus:latest
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./yml-config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./yml-config/alert-rule.yml:/etc/prometheus/rules/alert-rule.yml
     ports:
       - "9090:9090"
     command:
       - --config.file=/etc/prometheus/prometheus.yml
   grafana:
+    container_name: grafana
     image: grafana/grafana:11.3.0
     volumes:
       - grafana_data:/var/lib/grafana
@@ -56,6 +52,12 @@ services:
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=${SMTP_HOST}
+      - GF_SMTP_USER=${SMTP_USER}
+      - GF_SMTP_PASSWORD=${SMTP_PASSWORD}
+      - GF_SMTP_FROM_ADDRESS=${SMTP_FROM_ADDRESS}
+      - GF_SMTP_SKIP_VERIFY=true
     entrypoint:
       - sh
       - -euc
@@ -94,6 +96,7 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq # Persist data
   app:
+    container_name: app
     build:
       context: .
       dockerfile: Dockerfile.producer
@@ -105,6 +108,12 @@ services:
       SERVICE_NAME: tracing-producer
       PUBLISHER_PORT: 4000
       NODE_ENV: production
+      CONSUMER_PORT: 4001
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
     depends_on:
       - rabbitmq
       - otel-collector
@@ -115,18 +124,8 @@ services:
       - "4000:4000"
       - "9464:9464"
 
-  # postgres:
-  #   image: postgres:16.1
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #     - ./sql-data:/docker-entrypoint-initdb.d
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: postgres
-
   consumer:
+    container_name: consumer
     build:
       context: .
       dockerfile: Dockerfile.consumer1
@@ -144,7 +143,36 @@ services:
       SERVICE_NAME: tracing-consumer
       CONSUMER_PORT: 4001
       NODE_ENV: production
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+  db:
+    image: postgres:latest
+    container_name: postgres_container
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql-data:/docker-entrypoint-initdb.d
+  alertmanager:
+    container_name: alertmanager
+    image: prom/alertmanager:latest
+    volumes:
+      - ./yml-config/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    environment:
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS}
 
+    ports:
+      - "9093:9093"
 volumes:
   rabbitmq_data:
   loki_data:

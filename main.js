@@ -32,6 +32,8 @@ const { collectDefaultMetrics, register } = require("prom-client");
 
 // Metrics for dashboard id: 12230
 const apiMetrics = require("prometheus-api-metrics");
+const pool = require("./database_config");
+
 app.use(apiMetrics({}));
 
 // collectDefaultMetrics();
@@ -238,6 +240,13 @@ let connection;
     });
     counter.add(1);
     res.send(metrics.getMetricsText());
+  });
+
+  app.get("/test/db", async (req, res) => {
+    const result = await pool.query("SELECT * FROM customer");
+    const span = trace.getActiveSpan();
+
+    res.send([...result.rows, { traceId: span.spanContext().traceId }]);
   });
 
   // handle errors
