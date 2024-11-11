@@ -1,7 +1,7 @@
 require("dotenv").config();
 require("./otel-setup"); // Must be imported first
 const express = require("express");
-
+const cors = require("cors");
 const amqp = require("amqplib");
 const logger = require("./logger");
 const {
@@ -21,6 +21,17 @@ const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 const app = express();
+app.use(
+  cors({
+    origin: "*",
+    allowedHeaders: "*",
+    methods: "*",
+    credentials: true,
+    preflightContinue: true,
+    exposedHeaders: "*",
+    maxAge: 600,
+  })
+);
 const { doSomeWork, doSomeWork2, sleep, genError } = require("./helper_func");
 const {
   requestCounter,
