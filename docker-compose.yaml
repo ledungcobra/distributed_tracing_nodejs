@@ -11,13 +11,28 @@ services:
       # - "4319:4317" # otlp grpc
     entrypoint: sh -c "exec /tempo -config.file=/etc/tempo.yml"
 
+  alloy:
+    container_name: alloy
+    image: grafana/alloy:v1.5.0-rc.0
+    ports:
+      - "8080:8080" # HTTP port for Alloy
+      - "12346:12346" # Faro port
+    volumes:
+      - ./yml-config/alloy-config.alloy:/etc/alloy/config.alloy
+      - ./yml-config/alloy-agent-config.yaml:/etc/alloy/config.yaml
+    environment:
+      - ALLOY_ENV=production
+      - ALLOY_LOG_LEVEL=info
+
   otel-collector:
+    container_name: otel-collector
     image: otel/opentelemetry-collector-contrib:latest
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./yml-config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
       - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
     depends_on:
       - tempo
   loki:
@@ -124,55 +139,55 @@ services:
       - "4000:4000"
       - "9464:9464"
 
-  consumer:
-    container_name: consumer
-    build:
-      context: .
-      dockerfile: Dockerfile.consumer1
-    depends_on:
-      - rabbitmq
-      - otel-collector
-      - loki
-      - prometheus
-      - grafana
-    volumes:
-      - ./:/app
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      RABBITMQ_ENDPOINT: amqp://user:password@rabbitmq
-      SERVICE_NAME: tracing-consumer
-      CONSUMER_PORT: 4001
-      NODE_ENV: production
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: mydatabase
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-  db:
-    image: postgres:latest
-    container_name: postgres_container
-    environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: mydatabase
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./sql-data:/docker-entrypoint-initdb.d
-  alertmanager:
-    container_name: alertmanager
-    image: prom/alertmanager:latest
-    volumes:
-      - ./yml-config/alertmanager.yml:/etc/alertmanager/alertmanager.yml
-    environment:
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
-      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS}
+  # consumer:
+  #   container_name: consumer
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.consumer1
+  #   depends_on:
+  #     - rabbitmq
+  #     - otel-collector
+  #     - loki
+  #     - prometheus
+  #     - grafana
+  #   volumes:
+  #     - ./:/app
+  #   environment:
+  #     OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+  #     RABBITMQ_ENDPOINT: amqp://user:password@rabbitmq
+  #     SERVICE_NAME: tracing-consumer
+  #     CONSUMER_PORT: 4001
+  #     NODE_ENV: production
+  #     POSTGRES_USER: myuser
+  #     POSTGRES_PASSWORD: mypassword
+  #     POSTGRES_DB: mydatabase
+  #     POSTGRES_HOST: db
+  #     POSTGRES_PORT: 5432
+  # db:
+  #   image: postgres:latest
+  #   container_name: postgres_container
+  #   environment:
+  #     POSTGRES_USER: myuser
+  #     POSTGRES_PASSWORD: mypassword
+  #     POSTGRES_DB: mydatabase
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #     - ./sql-data:/docker-entrypoint-initdb.d
+  # alertmanager:
+  #   container_name: alertmanager
+  #   image: prom/alertmanager:latest
+  #   volumes:
+  #     - ./yml-config/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+  #   environment:
+  #     SMTP_HOST: ${SMTP_HOST}
+  #     SMTP_USER: ${SMTP_USER}
+  #     SMTP_PASSWORD: ${SMTP_PASSWORD}
+  #     SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS}
 
-    ports:
-      - "9093:9093"
+  #   ports:
+  #     - "9093:9093"
 volumes:
   rabbitmq_data:
   loki_data:

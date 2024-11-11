@@ -2,7 +2,6 @@ stream_over_http_enabled: true
 server:
   http_listen_port: 3200
 
-
 distributor:
   receivers:
     jaeger:                            # the receives all come from the OpenTelemetry collector.  more configuration information can
